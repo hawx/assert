@@ -69,17 +69,11 @@ the problem actually occured in calling code.*/
 // CallerInfo returns an array of strings containing the file and line number
 // of each stack frame leading from the current test to the assert call that
 // failed.
-func CallerInfo() []string {
-
-	pc := uintptr(0)
-	file := ""
-	line := 0
-	ok := false
-	name := ""
-
+func callerInfo() []string {
 	callers := []string{}
+
 	for i := 0; ; i++ {
-		pc, file, line, ok = runtime.Caller(i)
+		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
 			return nil
 		}
@@ -100,13 +94,12 @@ func CallerInfo() []string {
 		if f == nil {
 			break
 		}
-		name = f.Name()
+
+		name := f.Name()
 		// Drop the package
 		segments := strings.Split(name, ".")
 		name = segments[len(segments)-1]
-		if isTest(name, "Test") ||
-			isTest(name, "Benchmark") ||
-			isTest(name, "Example") {
+		if isTest(name, "Test") || isTest(name, "Benchmark") || isTest(name, "Example") {
 			break
 		}
 	}
@@ -132,7 +125,6 @@ func isTest(name, prefix string) bool {
 // getWhitespaceString returns a string that is long enough to overwrite the default
 // output from the go testing framework.
 func getWhitespaceString() string {
-
 	_, file, line, ok := runtime.Caller(1)
 	if !ok {
 		return ""
@@ -182,10 +174,9 @@ func indentMessageLines(message string, tabs int) string {
 
 // Fail reports a failure through
 func Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
-
 	message := messageFromMsgAndArgs(msgAndArgs...)
 
-	errorTrace := strings.Join(CallerInfo(), "\n\r\t\t\t")
+	errorTrace := strings.Join(callerInfo(), "\n\r\t\t\t")
 	if len(message) > 0 {
 		t.Errorf("\r%s\r\tError Trace:\t%s\n"+
 			"\r\tError:%s\n"+
@@ -209,7 +200,6 @@ func Fail(t TestingT, failureMessage string, msgAndArgs ...interface{}) bool {
 //
 //    assert.Implements(t, (*MyInterface)(nil), new(MyObject), "MyObject")
 func Implements(t TestingT, interfaceObject interface{}, object interface{}, msgAndArgs ...interface{}) bool {
-
 	interfaceType := reflect.TypeOf(interfaceObject).Elem()
 
 	if !reflect.TypeOf(object).Implements(interfaceType) {
@@ -222,7 +212,6 @@ func Implements(t TestingT, interfaceObject interface{}, object interface{}, msg
 
 // IsType asserts that the specified objects are of the same type.
 func IsType(t TestingT, expectedType interface{}, object interface{}, msgAndArgs ...interface{}) bool {
-
 	if !objectsAreEqual(reflect.TypeOf(object), reflect.TypeOf(expectedType)) {
 		return Fail(t, fmt.Sprintf("Object expected to be of type %v, but was %v", reflect.TypeOf(expectedType), reflect.TypeOf(object)), msgAndArgs...)
 	}
@@ -236,7 +225,6 @@ func IsType(t TestingT, expectedType interface{}, object interface{}, msgAndArgs
 //
 // Returns whether the assertion was successful (true) or not (false).
 func Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
-
 	if !objectsAreEqual(expected, actual) {
 		return Fail(t, fmt.Sprintf("Not equal: %#v (expected)\n"+
 			"        != %#v (actual)", expected, actual), msgAndArgs...)
