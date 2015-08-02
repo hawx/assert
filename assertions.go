@@ -43,9 +43,9 @@ func ObjectsAreEqual(expected, actual interface{}) bool {
 
 }
 
-// ObjectsAreEqualValues gets whether two objects are equal, or if their
+// objectsAreEquivalent gets whether two objects are equal, or if their
 // values are equal.
-func ObjectsAreEqualValues(expected, actual interface{}) bool {
+func objectsAreEquivalent(expected, actual interface{}) bool {
 	if ObjectsAreEqual(expected, actual) {
 		return true
 	}
@@ -246,15 +246,15 @@ func Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) 
 
 }
 
-// EqualValues asserts that two objects are equal or convertable to the same types
+// Equivalent asserts that two objects are equal or convertable to the same types
 // and equal.
 //
-//    assert.EqualValues(t, uint32(123), int32(123), "123 and 123 should be equal")
+//    assert.Equivalent(t, uint32(123), int32(123), "123 and 123 should be equal")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func EqualValues(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
+func Equivalent(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 
-	if !ObjectsAreEqualValues(expected, actual) {
+	if !objectsAreEquivalent(expected, actual) {
 		return Fail(t, fmt.Sprintf("Not equal: %#v (expected)\n"+
 			"        != %#v (actual)", expected, actual), msgAndArgs...)
 	}
