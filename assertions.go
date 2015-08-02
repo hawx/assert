@@ -29,7 +29,7 @@ type Comparison func() (success bool)
 // ObjectsAreEqual determines if two objects are considered equal.
 //
 // This function does no assertion of any kind.
-func ObjectsAreEqual(expected, actual interface{}) bool {
+func objectsAreEqual(expected, actual interface{}) bool {
 
 	if expected == nil || actual == nil {
 		return expected == actual
@@ -46,7 +46,7 @@ func ObjectsAreEqual(expected, actual interface{}) bool {
 // objectsAreEquivalent gets whether two objects are equal, or if their
 // values are equal.
 func objectsAreEquivalent(expected, actual interface{}) bool {
-	if ObjectsAreEqual(expected, actual) {
+	if objectsAreEqual(expected, actual) {
 		return true
 	}
 
@@ -223,7 +223,7 @@ func Implements(t TestingT, interfaceObject interface{}, object interface{}, msg
 // IsType asserts that the specified objects are of the same type.
 func IsType(t TestingT, expectedType interface{}, object interface{}, msgAndArgs ...interface{}) bool {
 
-	if !ObjectsAreEqual(reflect.TypeOf(object), reflect.TypeOf(expectedType)) {
+	if !objectsAreEqual(reflect.TypeOf(object), reflect.TypeOf(expectedType)) {
 		return Fail(t, fmt.Sprintf("Object expected to be of type %v, but was %v", reflect.TypeOf(expectedType), reflect.TypeOf(object)), msgAndArgs...)
 	}
 
@@ -237,7 +237,7 @@ func IsType(t TestingT, expectedType interface{}, object interface{}, msgAndArgs
 // Returns whether the assertion was successful (true) or not (false).
 func Equal(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 
-	if !ObjectsAreEqual(expected, actual) {
+	if !objectsAreEqual(expected, actual) {
 		return Fail(t, fmt.Sprintf("Not equal: %#v (expected)\n"+
 			"        != %#v (actual)", expected, actual), msgAndArgs...)
 	}
@@ -491,7 +491,7 @@ func False(t TestingT, value bool, msgAndArgs ...interface{}) bool {
 // Returns whether the assertion was successful (true) or not (false).
 func NotEqual(t TestingT, expected, actual interface{}, msgAndArgs ...interface{}) bool {
 
-	if ObjectsAreEqual(expected, actual) {
+	if objectsAreEqual(expected, actual) {
 		return Fail(t, "Should not be equal", msgAndArgs...)
 	}
 
@@ -519,7 +519,7 @@ func includeElement(list interface{}, element interface{}) (ok, found bool) {
 	}
 
 	for i := 0; i < listValue.Len(); i++ {
-		if ObjectsAreEqual(listValue.Index(i).Interface(), element) {
+		if objectsAreEqual(listValue.Index(i).Interface(), element) {
 			return true, true
 		}
 	}
