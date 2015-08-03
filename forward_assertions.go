@@ -160,25 +160,25 @@ func (a *Assertions) Condition(comp Comparison, msgAndArgs ...interface{}) bool 
 	return Condition(a.t, comp, msgAndArgs...)
 }
 
-// Panics asserts that the code inside the specified PanicTestFunc panics.
+// Panics asserts that the code inside the specified func panics.
 //
 //   assert.Panics(func(){
 //     GoCrazy()
 //   }, "Calling GoCrazy() should panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) Panics(f PanicTestFunc, msgAndArgs ...interface{}) bool {
+func (a *Assertions) Panics(f func(), msgAndArgs ...interface{}) bool {
 	return Panics(a.t, f, msgAndArgs...)
 }
 
-// NotPanics asserts that the code inside the specified PanicTestFunc does NOT panic.
+// NotPanics asserts that the code inside the specified func does NOT panic.
 //
 //   assert.NotPanics(func(){
 //     RemainCalm()
 //   }, "Calling RemainCalm() should NOT panic")
 //
 // Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) NotPanics(f PanicTestFunc, msgAndArgs ...interface{}) bool {
+func (a *Assertions) NotPanics(f func(), msgAndArgs ...interface{}) bool {
 	return NotPanics(a.t, f, msgAndArgs...)
 }
 
@@ -205,43 +205,6 @@ func (a *Assertions) InDelta(expected, actual interface{}, delta float64, msgAnd
 // Returns whether the assertion was successful (true) or not (false).
 func (a *Assertions) InEpsilon(expected, actual interface{}, epsilon float64, msgAndArgs ...interface{}) bool {
 	return InEpsilon(a.t, expected, actual, epsilon, msgAndArgs...)
-}
-
-// NoError asserts that a function returned no error (i.e. `nil`).
-//
-//   actualObj, err := SomeFunction()
-//   if assert.NoError(err) {
-//	   assert.Equal(actualObj, expectedObj)
-//   }
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) NoError(theError error, msgAndArgs ...interface{}) bool {
-	return NoError(a.t, theError, msgAndArgs...)
-}
-
-// Error asserts that a function returned an error (i.e. not `nil`).
-//
-//   actualObj, err := SomeFunction()
-//   if assert.Error(err, "An error was expected") {
-//	   assert.Equal(err, expectedError)
-//   }
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) Error(theError error, msgAndArgs ...interface{}) bool {
-	return Error(a.t, theError, msgAndArgs...)
-}
-
-// EqualError asserts that a function returned an error (i.e. not `nil`)
-// and that it is equal to the provided error.
-//
-//   actualObj, err := SomeFunction()
-//   if assert.Error(err, "An error was expected") {
-//	   assert.Equal(err, expectedError)
-//   }
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) EqualError(theError error, errString string, msgAndArgs ...interface{}) bool {
-	return EqualError(a.t, theError, errString, msgAndArgs...)
 }
 
 // Regexp asserts that a specified regexp matches a string.

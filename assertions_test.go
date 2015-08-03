@@ -404,54 +404,6 @@ func TestNotPanics(t *testing.T) {
 
 }
 
-func TestNoError(t *testing.T) {
-
-	mockT := new(testing.T)
-
-	// start with a nil error
-	var err error
-
-	True(t, NoError(mockT, err), "NoError should return True for nil arg")
-
-	// now set an error
-	err = errors.New("some error")
-
-	False(t, NoError(mockT, err), "NoError with error should return False")
-
-}
-
-func TestError(t *testing.T) {
-
-	mockT := new(testing.T)
-
-	// start with a nil error
-	var err error
-
-	False(t, Error(mockT, err), "Error should return False for nil arg")
-
-	// now set an error
-	err = errors.New("some error")
-
-	True(t, Error(mockT, err), "Error with error should return True")
-
-}
-
-func TestEqualError(t *testing.T) {
-	mockT := new(testing.T)
-
-	// start with a nil error
-	var err error
-	False(t, EqualError(mockT, err, ""),
-		"EqualError should return false for nil arg")
-
-	// now set an error
-	err = errors.New("some error")
-	False(t, EqualError(mockT, err, "Not some error"),
-		"EqualError should return false for different error string")
-	True(t, EqualError(mockT, err, "some error"),
-		"EqualError should return true")
-}
-
 func Test_isEmpty(t *testing.T) {
 
 	chWithValue := make(chan struct{}, 1)
