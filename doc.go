@@ -6,23 +6,21 @@ Example Usage
 The following is a complete example using assert in a standard test function:
    import (
      "testing"
-     "github.com/stretchr/testify/assert"
+     "hawx.me/code/assert"
    )
 
    func TestSomething(t *testing.T) {
-
      var a string = "Hello"
      var b string = "Hello"
 
      assert.Equal(t, a, b, "The two words should be the same.")
-
    }
 
 if you assert many times, use the below:
 
    import (
      "testing"
-     "github.com/stretchr/testify/assert"
+     "hawx.me/code/assert"
    )
 
    func TestSomething(t *testing.T) {
