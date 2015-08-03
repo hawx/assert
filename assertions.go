@@ -276,11 +276,11 @@ func NotContains(t TestingT, s, contains interface{}, msgAndArgs ...interface{})
 
 // Condition uses a Comparison to assert a complex condition.
 func Condition(t TestingT, comp Comparison, msgAndArgs ...interface{}) bool {
-	result := comp()
-	if !result {
-		Fail(t, "Condition failed!", msgAndArgs...)
+	if !comp() {
+		return Fail(t, "Condition failed!", msgAndArgs...)
 	}
-	return result
+
+	return true
 }
 
 // Panics asserts that the code inside the specified func panics.
@@ -357,25 +357,7 @@ func InDelta(t TestingT, expected, actual interface{}, delta float64, msgAndArgs
 }
 
 // InDeltaSlice is the same as InDelta, except it compares two slices.
-func InDeltaSlice(t TestingT, expected, actual interface{}, delta float64, msgAndArgs ...interface{}) bool {
-	if expected == nil || actual == nil ||
-		reflect.TypeOf(actual).Kind() != reflect.Slice ||
-		reflect.TypeOf(expected).Kind() != reflect.Slice {
-		return Fail(t, fmt.Sprintf("Parameters must be slice"), msgAndArgs...)
-	}
-
-	actualSlice := reflect.ValueOf(actual)
-	expectedSlice := reflect.ValueOf(expected)
-
-	for i := 0; i < actualSlice.Len(); i++ {
-		result := InDelta(t, actualSlice.Index(i).Interface(), expectedSlice.Index(i).Interface(), delta)
-		if !result {
-			return result
-		}
-	}
-
-	return true
-}
+var InDeltaSlice = inSlice(InDelta)
 
 // InEpsilon asserts that expected and actual have a relative error less than epsilon
 //
@@ -387,25 +369,7 @@ func InEpsilon(t TestingT, expected, actual interface{}, epsilon float64, msgAnd
 }
 
 // InEpsilonSlice is the same as InEpsilon, except it compares two slices.
-func InEpsilonSlice(t TestingT, expected, actual interface{}, delta float64, msgAndArgs ...interface{}) bool {
-	if expected == nil || actual == nil ||
-		reflect.TypeOf(actual).Kind() != reflect.Slice ||
-		reflect.TypeOf(expected).Kind() != reflect.Slice {
-		return Fail(t, fmt.Sprintf("Parameters must be slice"), msgAndArgs...)
-	}
-
-	actualSlice := reflect.ValueOf(actual)
-	expectedSlice := reflect.ValueOf(expected)
-
-	for i := 0; i < actualSlice.Len(); i++ {
-		result := InEpsilon(t, actualSlice.Index(i).Interface(), expectedSlice.Index(i).Interface(), delta)
-		if !result {
-			return result
-		}
-	}
-
-	return true
-}
+var InEpsilonSlice = inSlice(InEpsilon)
 
 // Regexp asserts that a specified regexp matches a string.
 //
@@ -414,12 +378,11 @@ func InEpsilonSlice(t TestingT, expected, actual interface{}, delta float64, msg
 //
 // Returns whether the assertion was successful (true) or not (false).
 func Regexp(t TestingT, rx interface{}, str interface{}, msgAndArgs ...interface{}) bool {
-	match := matchRegexp(rx, str)
-	if !match {
-		Fail(t, fmt.Sprintf("Expect \"%v\" to match \"%v\"", str, rx), msgAndArgs...)
+	if !matchRegexp(rx, str) {
+		return Fail(t, fmt.Sprintf("Expect \"%v\" to match \"%v\"", str, rx), msgAndArgs...)
 	}
 
-	return match
+	return true
 }
 
 // NotRegexp asserts that a specified regexp does not match a string.
@@ -429,10 +392,9 @@ func Regexp(t TestingT, rx interface{}, str interface{}, msgAndArgs ...interface
 //
 // Returns whether the assertion was successful (true) or not (false).
 func NotRegexp(t TestingT, rx interface{}, str interface{}, msgAndArgs ...interface{}) bool {
-	match := matchRegexp(rx, str)
-	if match {
-		Fail(t, fmt.Sprintf("Expect \"%v\" to NOT match \"%v\"", str, rx), msgAndArgs...)
+	if matchRegexp(rx, str) {
+		return Fail(t, fmt.Sprintf("Expect \"%v\" to NOT match \"%v\"", str, rx), msgAndArgs...)
 	}
 
-	return !match
+	return true
 }

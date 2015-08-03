@@ -343,5 +343,27 @@ func matchRegexp(rx interface{}, str interface{}) bool {
 		r = regexp.MustCompile(fmt.Sprint(rx))
 	}
 
-	return (r.FindStringIndex(fmt.Sprint(str)) != nil)
+	return r.MatchString(fmt.Sprint(str))
+}
+
+func inSlice(f func(t TestingT, expected, actual interface{}, val float64, msgAndArgs ...interface{}) bool) func(t TestingT, expected, actual interface{}, val float64, msgAndArgs ...interface{}) bool {
+	return func(t TestingT, expected, actual interface{}, val float64, msgAndArgs ...interface{}) bool {
+		if expected == nil || actual == nil ||
+			reflect.TypeOf(actual).Kind() != reflect.Slice ||
+			reflect.TypeOf(expected).Kind() != reflect.Slice {
+			return Fail(t, fmt.Sprintf("Parameters must be slice"), msgAndArgs...)
+		}
+
+		actualSlice := reflect.ValueOf(actual)
+		expectedSlice := reflect.ValueOf(expected)
+
+		for i := 0; i < actualSlice.Len(); i++ {
+			result := f(t, actualSlice.Index(i).Interface(), expectedSlice.Index(i).Interface(), val)
+			if !result {
+				return result
+			}
+		}
+
+		return true
+	}
 }
