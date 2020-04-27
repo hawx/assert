@@ -11,6 +11,7 @@ import (
 // TestingT is an interface wrapper around *testing.T
 type TestingT interface {
 	Errorf(format string, args ...interface{})
+	FailNow()
 }
 
 // Comparison a custom function that returns true on success and false on failure
@@ -292,7 +293,7 @@ func Condition(t TestingT, comp Comparison, msgAndArgs ...interface{}) bool {
 // Returns whether the assertion was successful (true) or not (false).
 func Panics(t TestingT, f func(), msgAndArgs ...interface{}) bool {
 	if funcDidPanic, panicValue := didPanic(f); !funcDidPanic {
-		return Fail(t, fmt.Sprintf("func %#v should panic\n\r\tPanic value:\t%v", f, panicValue), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("func should panic\n\r\tPanic value:\t%v", panicValue), msgAndArgs...)
 	}
 
 	return true
@@ -307,7 +308,7 @@ func Panics(t TestingT, f func(), msgAndArgs ...interface{}) bool {
 // Returns whether the assertion was successful (true) or not (false).
 func NotPanics(t TestingT, f func(), msgAndArgs ...interface{}) bool {
 	if funcDidPanic, panicValue := didPanic(f); funcDidPanic {
-		return Fail(t, fmt.Sprintf("func %#v should not panic\n\r\tPanic value:\t%v", f, panicValue), msgAndArgs...)
+		return Fail(t, fmt.Sprintf("func should not panic\n\r\tPanic value:\t%v", panicValue), msgAndArgs...)
 	}
 
 	return true
