@@ -1,13 +1,14 @@
 package assert
 
 import (
+	"testing"
 	"time"
 )
 
-// BigTestingT is an interface wrapper around *testing.T
-type BigTestingT interface {
-	Errorf(format string, args ...interface{})
-	FailNow()
+type wrappedLogf func(format string, args ...interface{})
+
+func (f wrappedLogf) Errorf(format string, args ...interface{}) {
+	f(format, args...)
 }
 
 // WrappedAssertions provides assertion methods against an 'actual' value. It
@@ -22,25 +23,22 @@ type WrappedAssertions struct {
 // Wrapped provides assertion methods against an 'actual' value, reporting to
 // the wrapped 't'.
 type Wrapped struct {
-	t      BigTestingT
+	t      wrappedLogf
 	actual interface{}
-	fails  bool
 }
 
 // Wrap provides a function which will then allow you to assert properties of
 // the 'actual' value used.
-func Wrap(t BigTestingT) func(actual interface{}) *WrappedAssertions {
+func Wrap(t *testing.T) func(actual interface{}) *WrappedAssertions {
 	return func(actual interface{}) *WrappedAssertions {
 		return &WrappedAssertions{
 			Wrapped: Wrapped{
-				t:      t,
+				t:      wrappedLogf(t.Errorf),
 				actual: actual,
-				fails:  false,
 			},
 			Must: Wrapped{
-				t:      t,
+				t:      wrappedLogf(t.Fatalf),
 				actual: actual,
-				fails:  true,
 			},
 		}
 	}
@@ -53,11 +51,7 @@ func Wrap(t BigTestingT) func(actual interface{}) *WrappedAssertions {
 //
 func (w *Wrapped) Fail(msgAndArgs ...interface{}) bool {
 	value, _ := w.actual.(string)
-	Fail(w.t, value, msgAndArgs...)
-	if w.fails {
-		w.t.FailNow()
-	}
-	return false
+	return Fail(w.t, value, msgAndArgs...)
 }
 
 // Condition uses the Comparison provided to 'actual' to assert a complex condition.
@@ -68,18 +62,10 @@ func (w *Wrapped) Fail(msgAndArgs ...interface{}) bool {
 func (w *Wrapped) Condition(msgAndArgs ...interface{}) bool {
 	value, ok := w.actual.(Comparison)
 	if !ok {
-		Fail(w.t, "Condition called against a non-Comparison")
-		if w.fails {
-			w.t.FailNow()
-		}
-		return false
+		return Fail(w.t, "Condition called against a non-Comparison")
 	}
 
-	ok = Condition(w.t, value, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Condition(w.t, value, msgAndArgs...)
 }
 
 // Contains asserts that the specified string contains the specified substring.
@@ -88,11 +74,7 @@ func (w *Wrapped) Condition(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Contains(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := Contains(w.t, w.actual, expected, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Contains(w.t, w.actual, expected, msgAndArgs...)
 }
 
 // Empty asserts that the specified object is empty: i.e. nil, "", false, 0 or a
@@ -102,11 +84,7 @@ func (w *Wrapped) Contains(expected interface{}, msgAndArgs ...interface{}) bool
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Empty(msgAndArgs ...interface{}) bool {
-	ok := Empty(w.t, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Empty(w.t, w.actual, msgAndArgs...)
 }
 
 // Equal asserts that two objects are equal.
@@ -115,11 +93,7 @@ func (w *Wrapped) Empty(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Equal(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := Equal(w.t, expected, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Equal(w.t, expected, w.actual, msgAndArgs...)
 }
 
 // Equivalent asserts that two objects are equal or convertable to the same types
@@ -129,11 +103,7 @@ func (w *Wrapped) Equal(expected interface{}, msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Equivalent(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := Equivalent(w.t, expected, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Equivalent(w.t, expected, w.actual, msgAndArgs...)
 }
 
 // Exactly asserts that two objects are equal is value and type.
@@ -142,11 +112,7 @@ func (w *Wrapped) Equivalent(expected interface{}, msgAndArgs ...interface{}) bo
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Exactly(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := Exactly(w.t, expected, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Exactly(w.t, expected, w.actual, msgAndArgs...)
 }
 
 // False asserts that the specified value is true.
@@ -157,19 +123,10 @@ func (w *Wrapped) Exactly(expected interface{}, msgAndArgs ...interface{}) bool 
 func (w *Wrapped) False(msgAndArgs ...interface{}) bool {
 	value, ok := w.actual.(bool)
 	if !ok {
-		Fail(w.t, "False called against a non-bool")
-		if w.fails {
-			w.t.FailNow()
-		}
-		return false
+		return Fail(w.t, "False called against a non-bool")
 	}
 
-	ok = False(w.t, value, msgAndArgs...)
-
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return False(w.t, value, msgAndArgs...)
 }
 
 // Implements asserts that an object is implemented by the specified interface.
@@ -178,11 +135,7 @@ func (w *Wrapped) False(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Implements(iface interface{}, msgAndArgs ...interface{}) bool {
-	ok := Implements(w.t, iface, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Implements(w.t, iface, w.actual, msgAndArgs...)
 }
 
 // InDelta asserts that the two numerals are within delta of each other.
@@ -191,11 +144,7 @@ func (w *Wrapped) Implements(iface interface{}, msgAndArgs ...interface{}) bool 
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) InDelta(expected interface{}, delta float64, msgAndArgs ...interface{}) bool {
-	ok := InDelta(w.t, expected, w.actual, delta, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return InDelta(w.t, expected, w.actual, delta, msgAndArgs...)
 }
 
 // InEpsilon asserts that expected and actual have a relative error less than
@@ -203,22 +152,14 @@ func (w *Wrapped) InDelta(expected interface{}, delta float64, msgAndArgs ...int
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) InEpsilon(expected interface{}, epsilon float64, msgAndArgs ...interface{}) bool {
-	ok := InEpsilon(w.t, expected, w.actual, epsilon, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return InEpsilon(w.t, expected, w.actual, epsilon, msgAndArgs...)
 }
 
 // IsType asserts that the specified objects are of the same type.
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) IsType(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := IsType(w.t, expected, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return IsType(w.t, expected, w.actual, msgAndArgs...)
 }
 
 // Len asserts that the specified object has specific length.
@@ -228,11 +169,7 @@ func (w *Wrapped) IsType(expected interface{}, msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Len(length int, msgAndArgs ...interface{}) bool {
-	ok := Len(w.t, w.actual, length, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Len(w.t, w.actual, length, msgAndArgs...)
 }
 
 // Nil asserts that the specified object is nil.
@@ -241,11 +178,7 @@ func (w *Wrapped) Len(length int, msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Nil(msgAndArgs ...interface{}) bool {
-	ok := Nil(w.t, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Nil(w.t, w.actual, msgAndArgs...)
 }
 
 // NotContains asserts that the specified string does NOT contain the specified substring.
@@ -254,11 +187,7 @@ func (w *Wrapped) Nil(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) NotContains(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := NotContains(w.t, w.actual, expected, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return NotContains(w.t, w.actual, expected, msgAndArgs...)
 }
 
 // NotEmpty asserts that the specified object is NOT empty: i.e. not nil, "",
@@ -270,11 +199,7 @@ func (w *Wrapped) NotContains(expected interface{}, msgAndArgs ...interface{}) b
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) NotEmpty(msgAndArgs ...interface{}) bool {
-	ok := NotEmpty(w.t, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return NotEmpty(w.t, w.actual, msgAndArgs...)
 }
 
 // NotEqual asserts that the specified values are NOT equal.
@@ -283,11 +208,7 @@ func (w *Wrapped) NotEmpty(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) NotEqual(expected interface{}, msgAndArgs ...interface{}) bool {
-	ok := NotEqual(w.t, expected, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return NotEqual(w.t, expected, w.actual, msgAndArgs...)
 }
 
 // NotNil asserts that the specified object is not nil.
@@ -296,11 +217,7 @@ func (w *Wrapped) NotEqual(expected interface{}, msgAndArgs ...interface{}) bool
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) NotNil(msgAndArgs ...interface{}) bool {
-	ok := NotNil(w.t, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return NotNil(w.t, w.actual, msgAndArgs...)
 }
 
 // NotPanics asserts that the code inside the specified func does NOT panic.
@@ -311,18 +228,10 @@ func (w *Wrapped) NotNil(msgAndArgs ...interface{}) bool {
 func (w *Wrapped) NotPanics(msgAndArgs ...interface{}) bool {
 	value, ok := w.actual.(func())
 	if !ok {
-		Fail(w.t, "NotPanics called against a non-func() ")
-		if w.fails {
-			w.t.FailNow()
-		}
-		return false
+		return Fail(w.t, "NotPanics called against a non-func() ")
 	}
 
-	ok = NotPanics(w.t, value, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return NotPanics(w.t, value, msgAndArgs...)
 }
 
 // NotRegexp asserts that a specified regexp does not match a string.
@@ -332,11 +241,7 @@ func (w *Wrapped) NotPanics(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) NotRegexp(regex interface{}, msgAndArgs ...interface{}) bool {
-	ok := NotRegexp(w.t, regex, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return NotRegexp(w.t, regex, w.actual, msgAndArgs...)
 }
 
 // Panics asserts that the code inside the specified func panics.
@@ -347,18 +252,10 @@ func (w *Wrapped) NotRegexp(regex interface{}, msgAndArgs ...interface{}) bool {
 func (w *Wrapped) Panics(msgAndArgs ...interface{}) bool {
 	value, ok := w.actual.(func())
 	if !ok {
-		Fail(w.t, "Panics called against a non-func() ")
-		if w.fails {
-			w.t.FailNow()
-		}
-		return false
+		return Fail(w.t, "Panics called against a non-func() ")
 	}
 
-	ok = Panics(w.t, value, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Panics(w.t, value, msgAndArgs...)
 }
 
 // Regexp asserts that a specified regexp matches a string.
@@ -368,11 +265,7 @@ func (w *Wrapped) Panics(msgAndArgs ...interface{}) bool {
 //
 // Returns whether the assertion was successful (true) or not (false).
 func (w *Wrapped) Regexp(regex interface{}, msgAndArgs ...interface{}) bool {
-	ok := Regexp(w.t, regex, w.actual, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return Regexp(w.t, regex, w.actual, msgAndArgs...)
 }
 
 // True asserts that the specified value is true.
@@ -383,18 +276,10 @@ func (w *Wrapped) Regexp(regex interface{}, msgAndArgs ...interface{}) bool {
 func (w *Wrapped) True(msgAndArgs ...interface{}) bool {
 	value, ok := w.actual.(bool)
 	if !ok {
-		Fail(w.t, "True called against a non-bool")
-		if w.fails {
-			w.t.FailNow()
-		}
-		return false
+		return Fail(w.t, "True called against a non-bool")
 	}
 
-	ok = True(w.t, value, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return True(w.t, value, msgAndArgs...)
 }
 
 // WithinDuration asserts that the two times are within duration delta of each other.
@@ -405,16 +290,8 @@ func (w *Wrapped) True(msgAndArgs ...interface{}) bool {
 func (w *Wrapped) WithinDuration(expected time.Time, delta time.Duration, msgAndArgs ...interface{}) bool {
 	value, ok := w.actual.(time.Time)
 	if !ok {
-		Fail(w.t, "WithinDuration called against a non-time.Time")
-		if w.fails {
-			w.t.FailNow()
-		}
-		return false
+		return Fail(w.t, "WithinDuration called against a non-time.Time")
 	}
 
-	ok = WithinDuration(w.t, expected, value, delta, msgAndArgs...)
-	if !ok && w.fails {
-		w.t.FailNow()
-	}
-	return ok
+	return WithinDuration(w.t, expected, value, delta, msgAndArgs...)
 }

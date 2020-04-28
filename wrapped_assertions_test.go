@@ -7,6 +7,17 @@ import (
 	"time"
 )
 
+func TestTestingStuff(t *testing.T) {
+	assert := Wrap(t)
+
+	assert(1).Equal(1)
+	assert(1).Must.Equal(1)
+
+	assert(1).Equal(2)
+	assert(1).Must.Equal(2)
+	assert(1).Must.Equal(3)
+}
+
 func TestWrappedImplements(t *testing.T) {
 	assert := Wrap(new(testing.T))
 
